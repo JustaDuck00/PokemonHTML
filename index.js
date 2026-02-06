@@ -73,7 +73,7 @@ class Sprite {
 		if (this.moving){
 		if (this.frames.max>0 ){this.frames.elapsed++}
 		if (this.frames.elapsed% 10 ===0) {
-			if (this.frames.val < this.frames.max) this.frames.val++
+			if (this.frames.val < this.frames.max - 1) this.frames.val++
 			else this.frames.val = 0
 		}}
 
@@ -86,7 +86,8 @@ const player = new Sprite({
 	},
 	image: playerdownImage,
 	frames: {
-		max:3
+		max:3,
+		val:1
 	},
 	sprites: { up:playerupImage, down:playerdownImage,right:playerrightImage,left:playerleftImage },
 })
