@@ -8,6 +8,11 @@ for (let i =0; i < collisions.length; i+=412 ) {
 	collisionsMAP.push(collisions.slice(i,412 + i ))
 }
 
+const battlezonesMAP = []
+for (let i =0; i < battlezones.length; i+=412 ) {
+	battlezonesMAP.push(battlezones.slice(i,412 + i ))
+}
+
 class boundary {
 	static width = 32
 	static height = 32
@@ -17,7 +22,7 @@ class boundary {
 		this.height = 32
 	}
 	draw( ) {
-		c.fillStyle ='rgba(255,0,0,0.0)'
+		c.fillStyle ='rgba(255,0,0,0)'
 		c.fillRect(this.position.x, this.position.y, this.width, this.height)
 	}
 }
@@ -37,6 +42,22 @@ collisionsMAP.forEach((row, i) => {
 		)
 	})
 })
+
+const battlezone = []
+
+battlezonesMAP.forEach((row, i) => {
+	row.forEach((symbol,j) => {
+		if (symbol !== 0)
+			battlezone.push(new boundary({position: {
+						x: j*boundary.width + offset.x,
+						y: i*boundary.height +offset.y
+					}
+				})
+			)
+	})
+})
+
+
 console.log(boundaries)
 c.fillStyle="white"
 c.fillRect(0, 0, canvas.width, canvas.height)
@@ -112,12 +133,15 @@ const keys ={
 		pressed: false
 	},
 }
-const movables =[background, ...boundaries]
+const movables =[background, ...boundaries, ...battlezone]
 function rectangularcollision({rectangle1,rectangle2}){
 	return (rectangle1.position.x + rectangle1.width >= rectangle2.position.x &&
 		rectangle1.position.x <= rectangle2.position.x + rectangle2.width &&
 		rectangle1.position.y <= rectangle2.position.y + rectangle2.height &&
 		rectangle1.position.y + rectangle1.height >= rectangle2.position.y)
+}
+const battle ={
+	initiated: false
 }
 function animate () {
 	window.requestAnimationFrame(animate)
@@ -130,47 +154,69 @@ function animate () {
 			rectangle2 : boundary
 		})) {console.log('colliding')}
 	})
+	battlezone.forEach(battlecone => {
+		battlecone.draw()
+	})
 	player.draw()
+
+	if (battle.initiated) return
+
+	if (keys.w.pressed || keys.s.pressed || keys.a.pressed || keys.d.pressed){
+		for (let i  = 0; i < battlezone.length; i++) { const battleZone = battlezone[i]
+			const overlappingArea = (Math.min(player.position.x+player.width, battleZone.position.x+battleZone.width)-Math.max(player.position.x- battleZone.position.x)) * (Math.min (player.position.y+player.height, battleZone.position.y+ battleZone.height) - Math.max(player.position.y-battleZone.position.y))
+			if (
+				rectangularcollision({
+				rectangle1 : player,
+				rectangle2 : battleZone
+			}) &&
+			overlappingArea > player.width * player.height /2 &&
+			Math.random() <0.1
+		) {
+			battle.initiated = true
+			break
+		}}
+}
+
 	let moving=true
 		player.moving = false
 	if(keys.w.pressed && lastkey === 'w') {
 		player.moving = true
 		player.image= player.sprites.up
-		for (let i =0; i<boundaries.length; i++) { const boundary=boundaries[i]
+		for (let i =0; i<boundaries.length; i++) {
+			const boundary = boundaries[i]
 			if (
-			rectangularcollision({
-				rectangle1 : player,
-				rectangle2 : {...boundary, position: {
-					x:boundary.position.x,
-					y:boundary.position.y +3
-				}
-				}
-			})
-			) {
-				console.log('colliding')
-			moving=false
+				rectangularcollision({
+					rectangle1: player,
+					rectangle2: {
+						...boundary, position: {
+							x: boundary.position.x,
+							y: boundary.position.y + 3
+						}
+					}
+				})) {
+				moving = false
 				break
 			}
 		}
 		if (moving)
-			movables.forEach((movable) => {movable.position.y +=3})
-	}
+			movables.forEach((movable) => {movable.position.y +=3})}
+
 	else if(keys.s.pressed && lastkey ==='s'){
 		player.moving = true
 		player.image= player.sprites.down
-		for (let i =0; i<boundaries.length; i++) { const boundary=boundaries[i]
+		for (let i =0; i<boundaries.length; i++) {
+			const boundary = boundaries[i]
 			if (
 				rectangularcollision({
-					rectangle1 : player,
-					rectangle2 : {...boundary, position: {
-							x:boundary.position.x,
-							y:boundary.position.y -3
+					rectangle1: player,
+					rectangle2: {
+						...boundary, position: {
+							x: boundary.position.x,
+							y: boundary.position.y - 3
 						}
 					}
-				})
-			) {
-				console.log('colliding')
-				moving=false
+				})) {
+				moving = false
 				break
 			}
 		}
@@ -188,9 +234,7 @@ function animate () {
 							y:boundary.position.y
 						}
 					}
-				})
-			) {
-				console.log('colliding')
+				})) {
 				moving=false
 				break
 			}
@@ -209,9 +253,7 @@ function animate () {
 							y:boundary.position.y
 						}
 					}
-				})
-			) {
-				console.log('colliding')
+				})) {
 				moving=false
 				break
 			}
