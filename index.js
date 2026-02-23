@@ -1,5 +1,6 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d')
+
 canvas.width = 1024
 canvas.height = 576
 
@@ -143,8 +144,53 @@ function rectangularcollision({rectangle1,rectangle2}){
 const battle ={
 	initiated: false
 }
+
+
+
+let lastkey = ''
+window.addEventListener('keydown', (e) => {
+	switch(e.key) {
+		case 'w' :
+			keys.w.pressed = true
+			lastkey = 'w'
+			break
+		case 's' :
+			keys.s.pressed = true
+			lastkey ='s'
+			break
+		case 'a' :
+			keys.a.pressed = true
+			lastkey = 'a'
+			break
+		case 'd' :
+			keys.d.pressed = true
+			lastkey = 'd'
+			break
+	}
+})
+window.addEventListener('keyup', (e) => {
+	switch(e.key) {
+		case 'w' :
+			keys.w.pressed = false
+			break
+		case 's' :
+			keys.s.pressed = false
+			break
+		case 'a' :
+			keys.a.pressed = false
+			break
+		case 'd' :
+			keys.d.pressed = false
+			break
+	}
+})
+
+
+
+
+
 function animate () {
-	window.requestAnimationFrame(animate)
+	const animationId = window.requestAnimationFrame(animate)
 	background.draw()
 	boundaries.forEach(boundary => {
 		boundary.draw()
@@ -163,7 +209,17 @@ function animate () {
 
 	if (keys.w.pressed || keys.s.pressed || keys.a.pressed || keys.d.pressed){
 		for (let i  = 0; i < battlezone.length; i++) { const battleZone = battlezone[i]
-			const overlappingArea = (Math.min(player.position.x+player.width, battleZone.position.x+battleZone.width)-Math.max(player.position.x- battleZone.position.x)) * (Math.min (player.position.y+player.height, battleZone.position.y+ battleZone.height) - Math.max(player.position.y-battleZone.position.y))
+			const overlappingArea =
+				(Math.min(
+						player.position.x + player.width,
+						battleZone.position.x + battleZone.width
+					) -
+					Math.max(player.position.x, battleZone.position.x)) *
+				(Math.min(
+						player.position.y + player.height,
+						battleZone.position.y + battleZone.height
+					) -
+					Math.max(player.position.y, battleZone.position.y))
 			if (
 				rectangularcollision({
 				rectangle1 : player,
@@ -173,6 +229,26 @@ function animate () {
 			Math.random() <0.1
 		) {
 			battle.initiated = true
+				window.cancelAnimationFrame(animationId)
+				gsap.to('#overlapping div', {
+					opacity: 1,
+					repeat: 3,
+					yoyo: true,
+					duration: 0.4,
+					onComplete() {
+						gsap.to('#overlapping div', {
+							opacity: 1,
+							duration: 0.2,
+							onComplete() {
+								animateBattle()
+								gsap.to('#overlapping div', {
+									opacity: 0,
+									duration: 0.4
+								})
+							}
+						})
+					}
+				})
 			break
 		}}
 }
@@ -263,40 +339,26 @@ function animate () {
 }
 
 animate()
-let lastkey = ''
-window.addEventListener('keydown', (e) => {
-	switch(e.key) {
-		case 'w' : 
-			keys.w.pressed = true
-			lastkey = 'w'
-			break
-		case 's' : 
-			keys.s.pressed = true
-			lastkey ='s'
-			break
-		case 'a' : 
-			keys.a.pressed = true
-			lastkey = 'a'
-			break
-		case 'd' : 
-			keys.d.pressed = true
-			lastkey = 'd'
-			break
-	}
-})
-window.addEventListener('keyup', (e) => {
-	switch(e.key) {
-		case 'w' : 
-			keys.w.pressed = false
-			break
-		case 's' : 
-			keys.s.pressed = false
-			break
-		case 'a' : 
-			keys.a.pressed = false
-			break
-		case 'd' : 
-			keys.d.pressed = false
-			break
-	}
-})
+
+const battleBackgroundImage=new Image()
+battleBackgroundImage.src ='./img/BattleBackground.png'
+const  bulbasaurImage=new Image()
+bulbasaurImage.src ='./img/bulbasaur.png'
+const battleBackground = new Sprite({position:{x:0,y:0},image: battleBackgroundImage})
+const bulbasaur = new Sprite({position:{x:700,y:275},image:bulbasaurImage})
+function animateBattle() {
+	window.requestAnimationFrame(animateBattle)
+
+	c.drawImage(
+		battleBackground.image,
+		0,
+		0,
+		battleBackground.image.width,
+		battleBackground.image.height,
+		0,
+		0,
+		canvas.width,
+		canvas.height,
+	)
+	bulbasaur.draw()
+}
