@@ -76,23 +76,47 @@ const playerrightImage = new Image()
 playerrightImage.src = './img/player(right).png'
 
 class Sprite {
-	constructor (
-	{ position, velocity, image, frames= {max: 1},sprites}
-) {
+	constructor({
+					position,
+					velocity,
+					image,
+					frames = { max: 1 },
+					sprites,
+					scale = 1
+				}) {
 		this.position = position
 		this.image = image
 		this.frames = {...frames, val: 0, elapsed: 0 }
-		this.image.onload=() => {
-			this.width= this.image.width /this.frames.max
-			this.height= this.image.height
+		this.scale = scale
+
+		const setSize = () => {
+			this.width = (this.image.width / this.frames.max) * this.scale
+			this.height = this.image.height * this.scale
 		}
-		this.moving =false
-		this.sprites=sprites
+
+		if (this.image.complete) {
+			setSize()
+		} else {
+			this.image.onload = setSize
+		}
+		this.animate =false
+		this.sprites = sprites
+		this.scale = scale
 	}
-	
+
 	draw() {
-	c.drawImage(this.image, this.frames.val * this.width, 0, this.image.width /this.frames.max, this.image.height,this.position.x,this.position.y,this.image.width /this.frames.max, this.image.height)
-		if (this.moving){
+		c.drawImage(
+			this.image,
+			this.frames.val * (this.image.width / this.frames.max),
+			0,
+			this.image.width / this.frames.max,
+			this.image.height,
+			this.position.x,
+			this.position.y,
+			(this.image.width / this.frames.max) * this.scale,
+			this.image.height * this.scale
+		)
+		if (this.animate){
 		if (this.frames.max>0 ){this.frames.elapsed++}
 		if (this.frames.elapsed% 10 ===0) {
 			if (this.frames.val < this.frames.max - 1) this.frames.val++
@@ -112,12 +136,13 @@ const player = new Sprite({
 		val:1
 	},
 	sprites: { up:playerupImage, down:playerdownImage,right:playerrightImage,left:playerleftImage },
+	scale : 0.9
 })
 const background =new Sprite({
 	position: {
 		x: offset.x,
 		y: offset.y
-	}, 
+	},
 	image: image
 })
 const keys ={
@@ -225,7 +250,7 @@ function animate () {
 				rectangle1 : player,
 				rectangle2 : battleZone
 			}) &&
-			overlappingArea > player.width * player.height /2 &&
+			overlappingArea > 500 &&
 			Math.random() <0.1
 		) {
 			battle.initiated = true
@@ -254,9 +279,9 @@ function animate () {
 }
 
 	let moving=true
-		player.moving = false
+		player.animate = false
 	if(keys.w.pressed && lastkey === 'w') {
-		player.moving = true
+		player.animate = true
 		player.image= player.sprites.up
 		for (let i =0; i<boundaries.length; i++) {
 			const boundary = boundaries[i]
@@ -278,7 +303,7 @@ function animate () {
 			movables.forEach((movable) => {movable.position.y +=3})}
 
 	else if(keys.s.pressed && lastkey ==='s'){
-		player.moving = true
+		player.animate = true
 		player.image= player.sprites.down
 		for (let i =0; i<boundaries.length; i++) {
 			const boundary = boundaries[i]
@@ -299,7 +324,7 @@ function animate () {
 		if (moving)
 	 		movables.forEach(movable => {movable.position.y -=3})}
 	else if(keys.a.pressed && lastkey ==='a') {
-		player.moving = true
+		player.animate = true
 		player.image= player.sprites.left
 		for (let i =0; i<boundaries.length; i++) { const boundary=boundaries[i]
 			if (
@@ -318,7 +343,7 @@ function animate () {
 		if (moving)
 			movables.forEach(movable => {movable.position.x +=3})}
 	else if(keys.d.pressed && lastkey ==='d') {
-		player.moving = true
+		player.animate = true
 		player.image= player.sprites.right
 		for (let i =0; i<boundaries.length; i++) { const boundary=boundaries[i]
 			if (
@@ -344,8 +369,11 @@ const battleBackgroundImage=new Image()
 battleBackgroundImage.src ='./img/BattleBackground.png'
 const  bulbasaurImage=new Image()
 bulbasaurImage.src ='./img/bulbasaur.png'
+const  bulbasaurbackImage=new Image()
+bulbasaurbackImage.src ='./img/bulbasaur_back.png'
 const battleBackground = new Sprite({position:{x:0,y:0},image: battleBackgroundImage})
-const bulbasaur = new Sprite({position:{x:700,y:275},image:bulbasaurImage})
+const bulbasaur = new Sprite({position:{x:675,y:100},image:bulbasaurImage,scale:2})
+const bulbasaurback = new Sprite({position:{x:150,y:295},image:bulbasaurbackImage,scale:1.75})
 function animateBattle() {
 	window.requestAnimationFrame(animateBattle)
 
@@ -358,7 +386,9 @@ function animateBattle() {
 		0,
 		0,
 		canvas.width,
-		canvas.height,
+		canvas.height-150,
 	)
 	bulbasaur.draw()
+	bulbasaurback.draw()
+
 }

@@ -1,10 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <title>Game</title>
 
+
     <style>
+        * {font-family: 'Press Start 2P', cursive;}
+        h1{margin:0;}
+        button{border:none; cursor:pointer;font-size:16px;}
+        button:hover{background-color:#ddd;}
         body {
             margin: 0;
             background-color: black;
@@ -58,6 +66,18 @@
         canvas {
             display: block;
         }
+
+        #whiteBox {
+            background-color: white;
+            width: 1024px;
+            height: 150px;
+            position: fixed;
+            bottom: 334px;
+            left: 0;
+            z-index: 9999;
+            border-top: 4px black solid;
+            display: flex;
+        }
     </style>
 </head>
 
@@ -75,6 +95,19 @@
 
     <canvas width="1024" height="576"></canvas>
 
+</div>
+
+<div id="whiteBox">
+    <div style="width: 66.66%;display:grid; grid-template-columns:repeat(2,1fr)">
+        <button >attack 1</button>
+        <button >attack 2</button>
+        <button >attack 3</button>
+        <button >attack 4</button>
+    </div>
+    <div style="width:33.33%; display:  flex; align-items:center; justify-content: center; border-left: 4px black solid;"><h1 style="font-size:16px;">
+        Attack type
+    </h1>
+    </div>
 </div>
 
 <script>
