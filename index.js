@@ -376,7 +376,9 @@ const bulbasaur = new Sprite({position:{x:675,y:100},image:bulbasaurImage,scale:
 const bulbasaurback = new Sprite({position:{x:150,y:295},image:bulbasaurbackImage,scale:1.75})
 function animateBattle() {
 	window.requestAnimationFrame(animateBattle)
-
+	document.getElementById("attackBox").style.display = "flex"
+	document.getElementById("healthownBox").style.display = "flex"
+	document.getElementById("healthoppBox").style.display = "flex"
 	c.drawImage(
 		battleBackground.image,
 		0,
