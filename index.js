@@ -124,6 +124,29 @@ class Sprite {
 		}}
 
 	}
+	attack({ attack, recipient }) {
+		const tl = gsap.timeline()
+
+		tl.to(this.position, {
+			x: this.position.x - 20
+		})
+			.to(this.position, {
+				x: this.position.x + 40, duration:0.1,oncomplete() {
+					gsap.to('#healthopp',{
+						width: '50%'
+					})
+
+					tl.to(recipient.position,{
+						x:recipient.position.x+20,duration:0.1
+					}).to(recipient.position,{
+						x:recipient.position.x,duration:0.3
+					})
+				}
+			})
+			.to(this.position, {
+				x: this.position.x
+			})
+	}
 }
 const player = new Sprite({
 	position: {
@@ -209,8 +232,6 @@ window.addEventListener('keyup', (e) => {
 			break
 	}
 })
-
-
 
 
 
@@ -394,3 +415,19 @@ function animateBattle() {
 	bulbasaurback.draw()
 
 }
+document.querySelectorAll('button').forEach(button => {
+	button.addEventListener('click', () => {
+		bulbasaurback.attack({ attack: {
+			name:'tackle',
+			damage: 10,
+			type:'Normal',
+			},
+			recipient: bulbasaur
+		})
+	})
+})
+
+addEventListener('click',() =>{
+	console.log('clicked');
+
+})
