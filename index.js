@@ -1,3 +1,19 @@
+const worldMusic = new Audio('./music/05 - Littleroot Town.mp3')
+const battleMusic = new Audio('./music/09 - Battle! (Wild Pokemon).mp3')
+const victoryMusic = new Audio('./music/10 - Victory! (Wild Pokemon).mp3')
+
+worldMusic.loop = true
+battleMusic.loop = true
+
+let musicStarted = false;
+
+window.addEventListener('keydown', () => {
+	if (!musicStarted) {
+		worldMusic.play();
+		musicStarted = true;
+	}
+});
+let fadeOpacity = 0;
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d')
 
@@ -88,6 +104,9 @@ class Sprite {
 		this.image = image
 		this.frames = {...frames, val: 0, elapsed: 0 }
 		this.scale = scale
+		this.health = 45
+		this.opacity = 1
+		this.isEnemy = false
 
 		const setSize = () => {
 			this.width = (this.image.width / this.frames.max) * this.scale
@@ -105,6 +124,10 @@ class Sprite {
 	}
 
 	draw() {
+
+		c.save()
+		c.globalAlpha = this.opacity
+
 		c.drawImage(
 			this.image,
 			this.frames.val * (this.image.width / this.frames.max),
@@ -116,13 +139,16 @@ class Sprite {
 			(this.image.width / this.frames.max) * this.scale,
 			this.image.height * this.scale
 		)
-		if (this.animate){
-		if (this.frames.max>0 ){this.frames.elapsed++}
-		if (this.frames.elapsed% 10 ===0) {
-			if (this.frames.val < this.frames.max - 1) this.frames.val++
-			else this.frames.val = 0
-		}}
 
+		c.restore()
+
+		if (this.animate){
+			if (this.frames.max>0 ){this.frames.elapsed++}
+			if (this.frames.elapsed% 10 ===0) {
+				if (this.frames.val < this.frames.max - 1) this.frames.val++
+				else this.frames.val = 0
+			}
+		}
 	}
 	attack({ attack, recipient }) {
 		const tl = gsap.timeline()
@@ -131,21 +157,65 @@ class Sprite {
 			x: this.position.x - 20
 		})
 			.to(this.position, {
-				x: this.position.x + 40, duration:0.1,oncomplete() {
-					gsap.to('#healthopp',{
-						width: '50%'
+				x: this.position.x + 40,
+				duration:0.1,
+				onComplete: () => {
+
+					recipient.health -= attack.damage
+					if(recipient.health < 0) recipient.health = 0
+
+					let bar
+
+					if(recipient === bulbasaur){
+						gsap.to('#healthopp',{
+							width: (recipient.health / 45) * 100 + '%'
+						})
+					}else{
+						gsap.to('#healthown',{
+							width: (recipient.health / 45) * 100 + '%'
+						})
+					}
+
+					gsap.to(bar,{
+						width: (recipient.health / 45) * 100 + '%'
 					})
 
-					tl.to(recipient.position,{
-						x:recipient.position.x+20,duration:0.1
-					}).to(recipient.position,{
-						x:recipient.position.x,duration:0.3
+					gsap.to(recipient.position,{
+						x:recipient.position.x+20,
+						repeat:3,
+						yoyo:true,
+						duration:0.05
 					})
+
+					if(recipient.health <= 0){
+						recipient.faint()
+					}
 				}
 			})
 			.to(this.position, {
 				x: this.position.x
 			})
+	}
+	faint(){
+		gsap.to(this.position,{
+			y:this.position.y + 20
+		})
+
+		gsap.to(this,{
+			opacity:0
+		})
+
+		setTimeout(()=>{
+
+			if(this === bulbasaur){
+				battleMusic.pause()
+				victoryMusic.currentTime = 0
+				victoryMusic.play()
+			}
+
+			endBattle()
+
+		},1000)
 	}
 }
 const player = new Sprite({
@@ -182,6 +252,7 @@ const keys ={
 		pressed: false
 	},
 }
+let battleCooldown = 0;
 const movables =[background, ...boundaries, ...battlezone]
 function rectangularcollision({rectangle1,rectangle2}){
 	return (rectangle1.position.x + rectangle1.width >= rectangle2.position.x &&
@@ -271,10 +342,14 @@ function animate () {
 				rectangle1 : player,
 				rectangle2 : battleZone
 			}) &&
-			overlappingArea > 500 &&
-			Math.random() <0.1
+			overlappingArea > 250 &&
+			Math.random() <0.0005
 		) {
 			battle.initiated = true
+				worldMusic.pause()
+				victoryMusic.pause()
+				battleMusic.currentTime = 0
+				battleMusic.play()
 				window.cancelAnimationFrame(animationId)
 				gsap.to('#overlapping div', {
 					opacity: 1,
@@ -382,6 +457,7 @@ function animate () {
 		}
 		if (moving)
 			movables.forEach(movable => {movable.position.x -=3})}
+
 }
 
 animate()
@@ -393,10 +469,17 @@ bulbasaurImage.src ='./img/bulbasaur.png'
 const  bulbasaurbackImage=new Image()
 bulbasaurbackImage.src ='./img/bulbasaur_back.png'
 const battleBackground = new Sprite({position:{x:0,y:0},image: battleBackgroundImage})
-const bulbasaur = new Sprite({position:{x:675,y:100},image:bulbasaurImage,scale:2})
+const bulbasaur = new Sprite({
+	position:{x:675,y:100},
+	image:bulbasaurImage,
+	scale:2
+})
+
+bulbasaur.isEnemy = true
 const bulbasaurback = new Sprite({position:{x:150,y:295},image:bulbasaurbackImage,scale:1.75})
+let battleAnimationId
 function animateBattle() {
-	window.requestAnimationFrame(animateBattle)
+	battleAnimationId = window.requestAnimationFrame(animateBattle)
 	document.getElementById("attackBox").style.display = "flex"
 	document.getElementById("healthownBox").style.display = "flex"
 	document.getElementById("healthoppBox").style.display = "flex"
@@ -417,17 +500,83 @@ function animateBattle() {
 }
 document.querySelectorAll('button').forEach(button => {
 	button.addEventListener('click', () => {
-		bulbasaurback.attack({ attack: {
-			name:'tackle',
-			damage: 10,
-			type:'Normal',
+
+		if (!battle.initiated) return
+
+		bulbasaurback.attack({
+			attack:{
+				name:'tackle',
+				damage:35,
+				type:'Normal'
 			},
 			recipient: bulbasaur
 		})
+
+		if (bulbasaur.health > 0){
+			setTimeout(enemyAttack,1000)
+		}
 	})
 })
+function enemyAttack(){
 
+	if (!battle.initiated) return
+	if (bulbasaur.health <= 0) return
+	if (bulbasaurback.health <= 0) return
+
+	const moves = [
+		{name:'tackle',damage:35},
+		{name:'quick attack',damage:20}
+	]
+
+	const move = moves[Math.floor(Math.random()*moves.length)]
+
+	bulbasaur.attack({
+		attack: move,
+		recipient: bulbasaurback
+	})
+}
 addEventListener('click',() =>{
 	console.log('clicked');
 
 })
+function endBattle(){
+	battleMusic.pause()
+	window.cancelAnimationFrame(battleAnimationId)
+
+	battle.initiated = false
+
+	gsap.to('#overlapping div',{
+		opacity:1,
+		onComplete(){
+
+			document.getElementById("attackBox").style.display="none"
+			document.getElementById("healthownBox").style.display="none"
+			document.getElementById("healthoppBox").style.display="none"
+
+			document.querySelector('#healthopp').style.width='100%'
+			document.querySelector('#healthown').style.width='100%'
+
+			bulbasaur.health = 45
+			bulbasaurback.health = 45
+
+			bulbasaur.opacity = 1
+			bulbasaurback.opacity = 1
+			gsap.to('#overlapping div',{
+				opacity:0,
+				onComplete(){
+
+
+					animate()
+					setTimeout(()=>{
+
+						victoryMusic.pause()
+						worldMusic.currentTime = 0
+						worldMusic.play()
+
+					},10000)
+
+				}
+			})
+		}
+	})
+}
