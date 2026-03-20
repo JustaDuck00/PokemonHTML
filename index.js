@@ -343,7 +343,7 @@ function animate () {
 				rectangle2 : battleZone
 			}) &&
 			overlappingArea > 250 &&
-			Math.random() <0.0005
+			Math.random() <0.0025
 		) {
 			battle.initiated = true
 				worldMusic.pause()
